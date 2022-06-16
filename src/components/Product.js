@@ -1,24 +1,26 @@
 import React from "react";
 import { Card } from "react-bootstrap";
 import "../bootstrap.min.css";
+import Rating from './Rating'
+import { Link } from 'react-router-dom'
 
 function Product({ product }) {
   return (
-    <div class="card border-light mb-3" style={{ "max-width": "20rem" }}>
-      <div class="card-body">
+    <div className="card border-primary mb-3" style={{ "maxWidth": "20rem" }}>
+      <div className="card-body">
         <Card>
-          <a href={`/product/${product._id}`} >
+          <Link to={`/product/${product._id}`} >
             <Card.Img src={product.image} />
-          </a>
+          </Link>
           <Card.Body>
-            <a href={`/product/${product._id}`} style={{"text-decoration": "none"}}>
-                <h6 class="card-title">
+            <Link to={`/product/${product._id}`} style={{"textDecoration": "none"}}>
+                <h6 className="card-title">
                     {product.name}
                 </h6>
-            </a>
+            </Link>
             <Card.Text as="div">
               <div className="my-3">
-                {product.rating} from {product.numReviews} reviews
+                <Rating value={product.rating} text={`${product.numReviews} reviews`} color={'#f8e825'}/>
               </div>
             </Card.Text>
             <Card.Text as="h3">
