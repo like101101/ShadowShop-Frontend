@@ -1,32 +1,48 @@
-import React from "react";
+import React, {useState, useEffect} from "react";
 import { Link, useParams } from "react-router-dom";
-import {
-  Row,
-  Col,
-  Image,
-  ListGroup,
-  Button,
-  Card,
-} from "react-bootstrap";
+import { Row, Col, Image, ListGroup, Button, Card } from "react-bootstrap";
 import Rating from "../components/Rating";
-import products from "../products";
+import axios from "axios";
 
-function inStock( s ) {
-  if (s> 0){
+function inStockStatus(s) {
+  if (s > 0) {
+    return <p className="text-success">In Stock</p>;
+  } else {
+    return <p className="text-danger">Out of Stock</p>;
+  }
+}
+
+function inStockButton(s) {
+  if (s > 0) {
     return (
-      <p className="text-success">In Stock</p>
+      <Button type="button" className="btn btn-info">
+        Add to Cart
+      </Button>
     );
-  }else{
-    return(
-      <p className="text-danger">Out of Stock</p>
+  } else {
+    return (
+      <Button type="button" className="btn btn-info disabled">
+        Add to Cart
+      </Button>
     );
   }
-
 }
 
 function ProductScreen() {
+
   const { id } = useParams();
-  const product = products.find((p) => p._id === id);
+  const [product, setProduct] = useState([])
+
+  useEffect(() => {
+    async function fetchProduct(){
+      const { data } = await axios.get(`http://127.0.0.1:8000/api/products/${id}`)
+      setProduct(data);
+    }
+
+    fetchProduct()
+ 
+    
+  }, [])
 
   return (
     <div>
@@ -40,10 +56,10 @@ function ProductScreen() {
 
         <Col md={4}>
           <ListGroup variant="flush">
-            <ListGroup.Item >
+            <ListGroup.Item>
               <h4>{product.name}</h4>
             </ListGroup.Item>
-            <ListGroup.Item >
+            <ListGroup.Item>
               <Rating
                 value={product.rating}
                 text={`${product.numReviews} reviews`}
@@ -53,9 +69,7 @@ function ProductScreen() {
             <ListGroup.Item>
               <h5>Price: ${product.price}</h5>
             </ListGroup.Item>
-            <ListGroup.Item>
-              {product.description}
-            </ListGroup.Item>
+            <ListGroup.Item>{product.description}</ListGroup.Item>
           </ListGroup>
         </Col>
 
@@ -65,14 +79,15 @@ function ProductScreen() {
               <ListGroup.Item>
                 <Col>Price: </Col>
                 <Col>
-                <strong>${product.price}</strong>
+                  <strong>${product.price}</strong>
                 </Col>
               </ListGroup.Item>
               <ListGroup.Item>
                 <Col>Status: </Col>
-                <Col>
-                 {inStock(product.countInStock)}
-                </Col>
+                <Col>{inStockStatus(product.countInStock)}</Col>
+              </ListGroup.Item>
+              <ListGroup.Item>
+                {inStockButton(product.countInStock)}
               </ListGroup.Item>
             </ListGroup>
           </Card>
