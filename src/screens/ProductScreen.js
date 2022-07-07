@@ -1,55 +1,80 @@
-import React, {useState, useEffect} from "react";
-import { Link, useParams } from "react-router-dom";
-import { Row, Col, Image, ListGroup, Button, Card } from "react-bootstrap";
+import React, { useEffect, useState} from "react";
+import { Link, useParams,useNavigate, goBack } from "react-router-dom";
+import { Row, Col, Image, ListGroup, Button, Card, Form } from "react-bootstrap";
 import Rating from "../components/Rating";
-import axios from "axios";
+import Loader from "../components/Loader";
+import Message from "../components/Message";
+import swal from 'sweetalert';
+import { addToCart } from '../actions/cartActions'
+import { useDispatch, useSelector } from 'react-redux'
+import { listProductDetails } from '../actions/productActions'
 
-function inStockStatus(s) {
-  if (s > 0) {
-    return <p className="text-success">In Stock</p>;
-  } else {
-    return <p className="text-danger">Out of Stock</p>;
-  }
-}
-
-function inStockButton(s) {
-  if (s > 0) {
-    return (
-      <Button type="button" className="btn btn-info">
-        Add to Cart
-      </Button>
-    );
-  } else {
-    return (
-      <Button type="button" className="btn btn-info disabled">
-        Add to Cart
-      </Button>
-    );
-  }
-}
 
 function ProductScreen() {
+  const [qty, setQty] = useState(1)
 
   const { id } = useParams();
-  const [product, setProduct] = useState([])
+  const dispatch = useDispatch()
+  const productDetails = useSelector(state => state.productDetails)
+  const { loading, error, product } = productDetails
+  const navigate = useNavigate();
+ 
+
 
   useEffect(() => {
-    async function fetchProduct(){
-      const { data } = await axios.get(`http://127.0.0.1:8000/api/products/${id}`)
-      setProduct(data);
-    }
+    dispatch(listProductDetails(id))
 
-    fetchProduct()
- 
-    
-  }, [])
+  // eslint-disable-next-line
+  }, [dispatch, id]) 
+
+  const addToCartHandler = () =>{
+    const productId = id
+    dispatch(addToCart(productId, qty))
+  
+    swal({
+      title: "Successfully Added to cart",
+      icon: "success",
+      buttons: ["Continue", "Go to Check Out"],
+    }).then((checkout) => {
+      if (checkout){
+        navigate("/cart");
+      }
+    })
+  }
+
+  const inStockStatus = (s) => {
+    if (s > 0) {
+      return <p className="text-success">In Stock</p>;
+    } else {
+      return <p className="text-danger">Out of Stock</p>;
+    }
+  }
+
+  const inStockButton = (s) => {
+    if (s > 0) {
+      return (
+        <Button type="button" className="btn btn-info" onClick={addToCartHandler}>
+          Add to Cart
+        </Button>
+      );
+    } else {
+      return (
+        <Button type="button" className="btn btn-info disabled">
+          Add to Cart
+        </Button>
+      );
+    }
+  }
 
   return (
     <div>
-      <Link to="/" className="btn btn-secondary my-3">
+      <Button onClick={() => navigate(-1)} className="btn btn-outline-secondary bg-secondary">
         Go Back
-      </Link>
-      <Row>
+      </Button>
+      {loading ? (<Loader />)
+      : error ? (<Message variant='danger'>{error}</Message>)
+      :(
+        <Row>
         <Col md={5}>
           <Image src={product.image} alt={product.name} fluid />
         </Col>
@@ -86,13 +111,41 @@ function ProductScreen() {
                 <Col>Status: </Col>
                 <Col>{inStockStatus(product.countInStock)}</Col>
               </ListGroup.Item>
+              { product.countInStock > 0 && (
+                <ListGroup.Item>
+                  <Row>
+                    <Col>Qty:</Col>
+                    <Col>
+                      <Form.Control 
+                      as="select" 
+                      value = {qty} 
+                      onChange = {(e) => setQty(e.target.value)}
+                      size="sm">
+                        {
+                          [...Array(product.countInStock).keys()].map((x) => (
+                            <option key={x+1} value={x+1}>
+                              {x+1}
+                            </option>
+                          ))
+                        }
+                    
+                      </Form.Control>
+                    </Col>
+                  </Row>
+                </ListGroup.Item>
+              )}
               <ListGroup.Item>
                 {inStockButton(product.countInStock)}
               </ListGroup.Item>
+             
             </ListGroup>
           </Card>
         </Col>
       </Row>
+      )
+
+      }
+      
     </div>
   );
 }
